@@ -1,4 +1,3 @@
-from stellar_base.address import Address
 from stellar_base.horizon import horizon_livenet
 from stellar_base.keypair import Keypair
 
