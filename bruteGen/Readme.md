@@ -1,1 +1,1 @@
-Creates a random jeypair and check if the account exists
+Creates a random keypair and check if the account exists
