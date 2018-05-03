@@ -62,12 +62,12 @@ class Wallet:
 			#The balances, that we position in a frame and loop into all assets the account has or has trustlined
 			self.balancesFrame = tk.LabelFrame(self.window, text="Balances")
 			self.balancesFrame.grid(row=2, column=0, columnspan=3)
-			for i in self.infos['balances']:
+			for i in self.infos["balances"]:
 				if i["asset_type"] == "native":
-					balanceLabel = tk.Label(self.balancesFrame, text="XLM : "+i['balance'], padx=5, pady=5, bd=15)
+					balanceLabel = tk.Label(self.balancesFrame, text="XLM : "+i["balance"], padx=5, pady=5, bd=15)
 					balanceLabel.pack()			
 				else:
-					balanceLabel = tk.Label(self.balancesFrame, text=i['asset_code']+" : "+i['balance'], padx=5, pady=5, bd=15)
+					balanceLabel = tk.Label(self.balancesFrame, text=i["asset_code"]+" : "+i["balance"], padx=5, pady=5, bd=15)
 					balanceLabel.pack()
 			#Send
 			self.sendFrame = tk.LabelFrame(self.window, text="Send money")
@@ -78,7 +78,7 @@ class Wallet:
 			self.receiverInput.grid(row=1, column=0, columnspan=11)
 			self.assetLabel = tk.Label(self.sendFrame, text="Asset to send : ", pady=10)
 			self.assetLabel.grid(row=2, column=0)
-			#We make a list of all assets in order to pass them to the drop-down
+			#We make a list of all assets in order to pass them to the drop-down list to display
 			assets = ["XLM"]
 			for b in self.infos["balances"]:
 				if b["asset_type"] != "native":
@@ -127,50 +127,68 @@ class Wallet:
 		quantity = self.quantitySpin.get()
 		valid = True
 		#Verify address
-		addressInfos = self.horizon.account(address)
-		if "status" in addressInfos:
-			messagebox.showerror("Invalid address", "The address you provided doesn't refer to any account.")
+		if self.address == address:
+			messagebox.showerror("Bad address", "The destination address is your address")
 			valid = False
-		#Verifying the destination accepts this asset
+		else:
+			addressInfos = self.horizon.account(address)
+			if "status" in addressInfos:
+				messagebox.showerror("Invalid address", "The address you provided doesn't refer to any account.")
+				valid = False
+			
+		#Verifying that the destination accepts this asset
 		if valid:
+			valid = False
 			if asset == "XLM":
 				valid = True
 			else:
 				for i in addressInfos["balances"]:
-					if i["asset_code"] == asset:
-						valid = True
-						break
-					else:
-						messagebox.showerror("Invalid asset", "The destination account doesn't accept the asset you've chosen")
-						valid = False
+					if i["asset_type"] != "native": #Else getting a Keyerror because the responded dict is different is asset is XLM
+						if i["asset_code"] == asset:
+							valid = True
+							break
+			if not valid:
+				messagebox.showwarning("Missing trustline", "The destination account hasn't enabled the trustline for this currency")
+				
 		#Verifying the quantity
 		if valid:
-			#Getting fresh infos
+			#Getting fresh infos about the user account
 			freshInfos = self.horizon.account(self.address)
+			#Checking the balances, we need greater or equal than the quantity if not XLM (and the XLM as minimum balance), if XLM we need more or greater than
+			#the minimum balance (=1XLM + 0.5 XLM per subentry cf https://galactictalk.org/d/1371-cost-of-a-trustline, and 1 for the minimum balance cf https://www.stellar.org/faq/#_Why_is_there_a_minimum_balance)
 			for i in freshInfos["balances"]:
-				if i["asset_code"] == asset:
-					#0.5 XLM per subentry cf https://galactictalk.org/d/1371-cost-of-a-trustline, and 1 for the minimum balance cf https://www.stellar.org/faq/#_Why_is_there_a_minimum_balance
-					if i["balance"]-quantity > self.nbOfSubentrys/2 + 1:
-						valid = True
+				if i["asset_type"] != "native":
+					if i["asset_code"] == asset:
+						if float(i["balance"]) >= 0:
+							valid = True
+						else:
+							messagebox.showerror("Invalid Quantity", "The quantity you entered doesn't match your balances")
+							valid = False
+				else:
+					if asset == "XLM":
+						if float(i["balance"])-float(quantity) > self.nbOfSubentrys/2 + 1:
+							valid = True
+						else:
+							messagebox.showerror("Invalid Quantity", "The quantity you entered doesn't match your balances")
+							valid = False
 					else:
-						messagebox.showerror("Invalid Quantity", "The quantity you entered doesn't match your balances")
-						valid = False
-					break
-		
+						if float(i["balance"]) > self.nbOfSubentrys/2 + 1:
+							valid = True
+						else:
+							messagebox.showerror("Invalid Quantity", "The quantity you entered doesn't match your balances")
+							valid = False
+			
 		#If all the verification are passed, we build the tx
 		if valid:
 			#We create the operation
-			if self.assetChosen != "XLM":
+			if asset != "XLM":
 				#We fetch the issuer of the token
-				assetInfos = self.horizon.assets({"asset_code":self.assetChosen})
-				for i in assetChosen["_embedded"]:
-					if i["asset_code"] == self.assetChosen:
-						issuer = i["asset_issuer"]
+				issuer = self.horizon.assets({"asset_code" : asset}).get("_embedded").get("records")[0].get("asset_issuer") #ouch, cf Stellar.org and python SDK
 				asset = Asset(asset, issuer)
 			else:
 				asset = Asset("XLM")
 			operation = Payment({
-				'source' : self.address.decode(),
+				'source' : self.address,
 				'destination' : address,
 				'asset' : asset,
 				'amount' : quantity
@@ -186,14 +204,17 @@ class Wallet:
 				source = self.address,
 				opts = {
 					'sequence' : sequence,
-					'operations' : [op]
+					'operations' : [operation]
 				}
 			)
 			
 			#We enveloppe, sign and submit it
 			env = Te(tx=tx, opts={'network_id' : 'PUBLIC'})
 			env.sign(self.kp)
-			self.horizon.submit(env.xdr())
+			response = self.horizon.submit(env.xdr())
+			if response["status"] == 400:
+				reason = response.get("extras").get("result_codes")
+				messagebox.showerror("Transaction failed", reason.get("operations"))
 			
 			#To update
 			self.run()
