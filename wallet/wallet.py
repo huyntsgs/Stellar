@@ -3,6 +3,10 @@ from tkinter import messagebox
 import sys, os
 from stellar_base.horizon import horizon_livenet
 from stellar_base.keypair import Keypair
+from stellar_base.asset import Asset
+from stellar_base.operation import Payment
+from stellar_base.transaction import Transaction
+from stellar_base.transaction_envelope import TransactionEnvelope as Te
 
 class Wallet:
 	def __init__(self):
@@ -16,10 +20,11 @@ class Wallet:
 		self.window.tk.call('wm', 'iconphoto', self.window._w, iconImg)
 		#Infos about the user
 		self.connected = False
+		self.kp = ""
 		self.key = ""
 		self.address = ""
 		self.infos = {}
-		self.nbOfAssets = 0
+		self.nbOfSubentrys = 0
 		#Stellar
 		self.horizon = horizon_livenet()
 
@@ -48,6 +53,8 @@ class Wallet:
 		#Loading infos
 		self.infos = self.horizon.account(self.address)
 		if not "status" in self.infos:#meaning request failed with a 404
+			#Initializing attributes
+			self.nbOfSubentrys = self.infos["subentry_count"]
 			#Displaying infos
 			#The address
 			self.addressLabel = tk.Label(self.window, text="Your address : "+self.address, padx=10, pady=10, bd=10)
@@ -56,7 +63,6 @@ class Wallet:
 			self.balancesFrame = tk.LabelFrame(self.window, text="Balances")
 			self.balancesFrame.grid(row=2, column=0, columnspan=3)
 			for i in self.infos['balances']:
-				self.nbOfAssets += 1
 				if i["asset_type"] == "native":
 					balanceLabel = tk.Label(self.balancesFrame, text="XLM : "+i['balance'], padx=5, pady=5, bd=15)
 					balanceLabel.pack()			
@@ -135,6 +141,7 @@ class Wallet:
 						valid = True
 						break
 					else:
+						messagebox.showerror("Invalid asset", "The destination account doesn't accept the asset you've chosen")
 						valid = False
 		#Verifying the quantity
 		if valid:
@@ -142,20 +149,63 @@ class Wallet:
 			freshInfos = self.horizon.account(self.address)
 			for i in freshInfos["balances"]:
 				if i["asset_code"] == asset:
-					if i["balance"]-quantity > self.nbOfAssets:
+					#0.5 XLM per subentry cf https://galactictalk.org/d/1371-cost-of-a-trustline, and 1 for the minimum balance cf https://www.stellar.org/faq/#_Why_is_there_a_minimum_balance
+					if i["balance"]-quantity > self.nbOfSubentrys/2 + 1:
 						valid = True
 					else:
+						messagebox.showerror("Invalid Quantity", "The quantity you entered doesn't match your balances")
 						valid = False
 					break
+		
+		#If all the verification are passed, we build the tx
+		if valid:
+			#We create the operation
+			if self.assetChosen != "XLM":
+				#We fetch the issuer of the token
+				assetInfos = self.horizon.assets({"asset_code":self.assetChosen})
+				for i in assetChosen["_embedded"]:
+					if i["asset_code"] == self.assetChosen:
+						issuer = i["asset_issuer"]
+				asset = Asset(asset, issuer)
+			else:
+				asset = Asset("XLM")
+			operation = Payment({
+				'source' : self.address.decode(),
+				'destination' : address,
+				'asset' : asset,
+				'amount' : quantity
+			})
+			
+			#MEMO ??
+			
+			#The sequence of the sender
+			sequence = self.horizon.account(self.address).get("sequence")
+			
+			#Finally the tx
+			tx = Transaction(
+				source = self.address,
+				opts = {
+					'sequence' : sequence,
+					'operations' : [op]
+				}
+			)
+			
+			#We enveloppe, sign and submit it
+			env = Te(tx=tx, opts={'network_id' : 'PUBLIC'})
+			env.sign(self.kp)
+			self.horizon.submit(env.xdr())
+			
+			#To update
+			self.run()
 			
 
 	def unlock(self):
 		seed = self.keyInput.get()
 		try:
-			kp = Keypair.from_seed(seed)
+			self.kp = Keypair.from_seed(seed)
 			self.connected = True
-			self.key = kp.seed().decode()
-			self.address = kp.address().decode()
+			self.key = self.kp.seed().decode()
+			self.address = self.kp.address().decode()
 		except:
 			messagebox.showerror("Wrong key", "Cannot unlock the account, please check the key you entered") 			
 		self.run()
