@@ -42,13 +42,13 @@ builder.submit()
 
 # We finally send these tokens from issuer to distributer
 builder = Builder(secret=kp_issuer.seed().decode())
-builder.add_payment_op(kp_distrib.address().decode(), sys.argv[2], sys.argv[1], kp_issuer.address().decode())
+builder.append_payment_op(kp_distrib.address().decode(), sys.argv[2], sys.argv[1], kp_issuer.address().decode())
 builder.sign()
 builder.submit()
 
 # To make sure there will not be anymore creation of this token, we make it unavailable by setting the permission of the master key to 0, and the minimum permission for any operation to 1
 builder = Builder(secret=kp_distrib.seed().decode())
-builder.add_set_options_op(master_weight=0, low_treshold=1, med_treshold=1, high_treshold=1)
+builder.append_set_options_op(master_weight=0, low_treshold=1, med_treshold=1, high_treshold=1)
 builder.sign()
 builder.submit()
 
