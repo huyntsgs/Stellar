@@ -36,7 +36,7 @@ requests.get(bot_url, params={'addr': kp_distrib.address().decode()})
 # And we create a trust line between the distributor and the issuer
 # In order to do that, we build a transaction. I'll use the Builder class, for simplicity.
 builder = Builder(secret=kp_distrib.seed().decode())
-builder.add_trust_op(kp_issuer.address().decode(), sys.argv[1], sys.argv[2], kp_distrib.address().decode())
+builder.append_trust_op(kp_issuer.address().decode(), sys.argv[1], sys.argv[2], kp_distrib.address().decode())
 builder.sign()
 bulder.submit()
 
