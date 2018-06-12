@@ -38,19 +38,19 @@ requests.get(bot_url, params={'addr': kp_distrib.address().decode()})
 builder = Builder(secret=kp_distrib.seed().decode())
 builder.append_trust_op(kp_issuer.address().decode(), sys.argv[1], sys.argv[2], kp_distrib.address().decode())
 builder.sign()
-bulder.submit()
+builder.submit()
 
 # We finally send these tokens from issuer to distributer
 builder = Builder(secret=kp_issuer.seed().decode())
 builder.add_payment_op(kp_distrib.address().decode(), sys.argv[2], sys.argv[1], kp_issuer.address().decode())
 builder.sign()
-bulder.submit()
+builder.submit()
 
 # To make sure there will not be anymore creation of this token, we make it unavailable by setting the permission of the master key to 0, and the minimum permission for any operation to 1
 builder = Builder(secret=kp_distrib.seed().decode())
 builder.add_set_options_op(master_weight=0, low_treshold=1, med_treshold=1, high_treshold=1)
 builder.sign()
-bulder.submit()
+builder.submit()
 
 print("Succesfully created "+sys.argv[2]+" "+sys.argv[1]+" tokens. You can access them via the following account :")
 print("Address : "+kp_distrib.address().decode())
