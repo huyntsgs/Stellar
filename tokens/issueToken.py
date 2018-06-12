@@ -16,6 +16,6 @@ for car in sys.argv[1]:
     sys.exit(0)
     
 #quantity must be a positive number
-if !sys.argv[2].isdigit():
+if not sys.argv[2].isdigit():
     print("Please provide a correct quantity as second argument")
     sys.exit(0)
