@@ -1,5 +1,6 @@
 from stellar_base.keypair import Keypair
 import sys
+import requests
 
 if  len(sys.argv) < 3:
   print("usage : "+sys.argv[0]+" <tokenName> <quantity>")
@@ -19,3 +20,12 @@ for car in sys.argv[1]:
 if not sys.argv[2].isdigit():
     print("Please provide a correct quantity as second argument")
     sys.exit(0)
+
+# We need to accounts, one for the issuer, the other for the distributer
+kp_issuer = Keypair.random()
+kp_distrib = Keypair.random()
+
+# Then we need to fund them with test XLM
+bot_url = "https://friendbot.stellar.org"
+requests.get(url, params={addr: kp_issuer.address().decode()})
+requests.get(url, params={addr: kp_distrib.address().decode()})
