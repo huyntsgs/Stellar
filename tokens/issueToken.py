@@ -1,8 +1,7 @@
 from stellar_base.keypair import Keypair
 from stellar_base.horizon import horizon_testnet
 from stellar_base.operation import Payment
-from stellar_base.transaction import Transaction
-from stellar_base.transaction_envelope import TransactionEnvelope
+from stellar_base.builder import Builder
 import sys
 import requests
 
@@ -35,4 +34,20 @@ requests.get(url, params={addr: kp_issuer.address().decode()})
 requests.get(url, params={addr: kp_distrib.address().decode()})
 
 # And we create a trust line between the distributor and the issuer
-# In order to do that, we build a transaction
+# In order to do that, we build a transaction. I'll use the Builder class, for simplicity.
+builder = Builder(secret=kp_distrib.seed().decode())
+builder.add_trust_op(kp_issuer.address().decode(), sys.argv[1], sys.argv[2], kp_distrib.address().decode())
+builder.sign()
+bulder.submit()
+
+# We finally send these tokens from issuer to distributer
+builder = Builder(secret=kp_issuer.seed().decode())
+builder.add_payment_op(kp_distrib.address().decode(), sys.argv[2], sys.argv[1], kp_issuer.address().decode())
+builder.sign()
+bulder.submit()
+
+# To make sure there will not be anymore creation of this token, we make it unavailable by setting the permission of the master key to 0, and the minimum permission for any operation to 1
+builder = Builder(secret=kp_distrib.seed().decode())
+builder.add_set_options_op(kp_issuer.address().decode(), sys.argv[1], sys.argv[2], kp_distrib.address().decode())
+builder.sign()
+bulder.submit()
