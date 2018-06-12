@@ -30,8 +30,8 @@ kp_distrib = Keypair.random()
 
 # Then we need to fund them with testnet's Lumens
 bot_url = "https://friendbot.stellar.org"
-requests.get(url, params={addr: kp_issuer.address().decode()})
-requests.get(url, params={addr: kp_distrib.address().decode()})
+requests.get(bot_url, params={addr: kp_issuer.address().decode()})
+requests.get(bot_url, params={addr: kp_distrib.address().decode()})
 
 # And we create a trust line between the distributor and the issuer
 # In order to do that, we build a transaction. I'll use the Builder class, for simplicity.
