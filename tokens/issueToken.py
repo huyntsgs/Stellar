@@ -51,3 +51,7 @@ builder = Builder(secret=kp_distrib.seed().decode())
 builder.add_set_options_op(master_weight=0, low_treshold=1, med_treshold=1, high_treshold=1)
 builder.sign()
 bulder.submit()
+
+print("Succesfully created "+sys.argv[2]+" "+sys.argv[1]+" tokens. You can access them via the following account :")
+print("Address : "+kp_distrib.address().decode())
+print("Key : "+kp_distrib.seed().decode())
