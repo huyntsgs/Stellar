@@ -36,7 +36,7 @@ clear
 
 echo "Configuring.."
 ./autogen.sh &>/dev/null
-./configure CXX=g++-5 &>/dev/null
+./configure CC=gcc-5 CXX=g++-6 &>/dev/null
 clear
 
 echo "Building.."
