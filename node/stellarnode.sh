@@ -1,11 +1,16 @@
 #!/bin/bash
 
+if ! ls -l |grep -Fq "stellar-darosior.cfg"; then
+	echo "You don't have the configuration file in the same directory as this script."
+	echo "Please exit and create one or get it here https://github.com/darosior/Stellar/blob/master/node/stellar-darosior.cfg" 	 
+fi
+
 # Dependencies
 echo "Install dependencies ? [y/n]"
 read ins
 if [ $ins = "y" ] || [ $ins = "" ]; then
 	su -c "apt -qq update && apt -qq upgrade"
-	su -c "apt -qq install -y pkg-config bison flex libpq-dev pandoc perl libtool libstdc++6 autoconf automake git build-essential"
+	su -c "apt -qq install -y pkg-config bison flex libpq-dev pandoc perl libtool libstdc++6 autoconf automake git build-essential postgresql"
 	mkdir tmp && cd tmp
 	wget http://security.debian.org/debian-security/pool/updates/main/p/postgresql-9.6/libpq5_9.6.10-0+deb9u1_amd64.deb -qq
 	su -c "dpkg -i *"
@@ -51,6 +56,18 @@ if ! cat makeOut|grep -Fq "error"; then
 	if cat testsOut |grep -Fq "All tests passed"; then
 		echo "All tests passed"
 		su -c "make install"
+		clear
+		echo "stellar-core is succesfully compiled, let's configure it"
+		echo "Creating a new user \"stellar\" and data directories for logs and chain"
+		su -c "useradd stellar"
+		su -c "mkdir /var/log/stellar"
+		su -c "mkdir /var/stellar"
+		su -c "mkdir /var/stellar/buckets" 
+		su -c "chown stellar /var/log/stellar"
+		su -c "chown -R stellar /var/stellar"
+		echo "Creating a new role \"stellar\" and a new db \"stellar\""
+		su -c "su -c \"createuser -D -R -S stellar && createdb stellar\" - postgres"
+		echo "Copying configuration file to stellar-core directory."
 	else
 		echo "One test did not pass"
 		cat testsout
