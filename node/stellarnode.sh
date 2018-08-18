@@ -1,9 +1,12 @@
 #!/bin/bash
 
+
+# If config file isn't here, don't waste time to compile
 if ! ls -l |grep -Fq "stellar-darosior.cfg"; then
 	echo "You don't have the configuration file in the same directory as this script."
 	echo "Please exit and create one or get it here https://github.com/darosior/Stellar/blob/master/node/stellar-darosior.cfg" 	 
 fi
+
 
 # Dependencies
 echo "Install dependencies ? [y/n]"
@@ -42,10 +45,9 @@ git submodule init &>/dev/null
 git submodule update &>/dev/null
 
 
-echo "Configuring.."
+echo "Configuring build.."
 ./autogen.sh &>/dev/null
 ./configure CC=gcc-5 CXX=g++-5 &>/dev/null
-
 
 echo "Building.."
 make &>makeOut
@@ -57,6 +59,8 @@ if ! cat makeOut|grep -Fq "error"; then
 		echo "All tests passed"
 		su -c "make install"
 		clear
+
+		# Configuration
 		echo "stellar-core is succesfully compiled, let's configure it"
 		echo "Creating a new user \"stellar\" and data directories for logs and chain"
 		su -c "useradd stellar"
@@ -68,6 +72,7 @@ if ! cat makeOut|grep -Fq "error"; then
 		echo "Creating a new role \"stellar\" and a new db \"stellar\""
 		su -c "su -c \"createuser -D -R -S stellar && createdb stellar\" - postgres"
 		echo "Copying configuration file to stellar-core directory."
+		cp ../stellar-darosior.cfg ./
 	else
 		echo "One test did not pass"
 		cat testsout
