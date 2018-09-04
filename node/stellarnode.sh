@@ -13,7 +13,7 @@ echo "Install dependencies ? [y/n]"
 read ins
 if [ $ins = "y" ] || [ $ins = "" ]; then
 	su -c "apt -qq update && apt -qq upgrade"
-	su -c "apt -qq install -y pkg-config bison flex libpq-dev pandoc perl libtool libstdc++6 autoconf automake git build-essential postgresql"
+	su -c "apt -qq install -y pkg-config bison flex libpq-dev pandoc perl libtool libstdc++6 autoconf automake git build-essential postgresql curl"
 	mkdir tmp && cd tmp
 	wget http://security.debian.org/debian-security/pool/updates/main/p/postgresql-9.6/libpq5_9.6.10-0+deb9u1_amd64.deb -qq
 	su -c "dpkg -i *"
@@ -49,6 +49,7 @@ echo "Configuring build.."
 ./autogen.sh &>/dev/null
 ./configure CC=gcc-5 CXX=g++-5 &>/dev/null
 
+compiled=false
 echo "Building.."
 make &>makeOut
 if ! cat makeOut|grep -Fq "error"; then 
@@ -58,21 +59,8 @@ if ! cat makeOut|grep -Fq "error"; then
 	if cat testsOut |grep -Fq "All tests passed"; then
 		echo "All tests passed"
 		su -c "make install"
+		compiled=true
 		clear
-
-		# Configuration
-		echo "stellar-core is succesfully compiled, let's configure it"
-		echo "Creating a new user \"stellar\" and data directories for logs and chain"
-		su -c "useradd stellar"
-		su -c "mkdir /var/log/stellar"
-		su -c "mkdir /var/stellar"
-		su -c "mkdir /var/stellar/buckets" 
-		su -c "chown stellar /var/log/stellar"
-		su -c "chown -R stellar /var/stellar"
-		echo "Creating a new role \"stellar\" and a new db \"stellar\""
-		su -c "su -c \"createuser -D -R -S stellar && createdb stellar\" - postgres"
-		echo "Copying configuration file to stellar-core directory."
-		cp ../stellar-darosior.cfg ./
 	else
 		echo "One test did not pass"
 		cat testsout
@@ -83,3 +71,41 @@ else
 	tail -n 20 makeOut
 fi
 rm -rf makeOut
+
+
+# Configuration
+echo "Configuring your system to interact with stellar-core"
+if [ "$compiled" = true ];then
+	echo "stellar-core is succesfully compiled, let's configure it"
+	echo "Creating a new user \"stellar\" and data directories for logs and chain"
+	su -c "useradd stellar"
+	su -c "mkdir /var/log/stellar"
+	su -c "mkdir /var/stellar"
+	su -c "mkdir /var/stellar/buckets" 
+	su -c "chown stellar /var/log/stellar"
+	su -c "chown -R stellar /var/stellar"
+	echo "Creating a new role \"stellar\" and a new db \"stellar\""
+	su -c "su -c \"createuser -D -R -S stellar && createdb stellar\" - postgres"
+	echo "Copying configuration file to /etc/stellar."
+	cp ../stellar-darosior.cfg /etc/stellar
+	seed=$(su -c "stellar-core --genseed" - stellar)
+	su -c 'sed -i "1s/^/$seed\n/" /etc/stellar'
+	echo "Your seed, which identifies your node is\n $seed"
+	su -c ' echo "[Unit]
+Description=Stellar Core
+After=postgresql.service
+
+[Service]
+StandardOutput=null
+ExecStart=/usr/local/bin/stellar-core --conf /etc/stellar/stellar-darosior.cfg
+User=stellar
+Group=stellar
+WorkingDirectory=/home/stellar
+Restart=on-failure
+
+[Install]
+WantedBy=default.target" > /etc/systemd/stellar-core.service'
+	su -c 'stellar-core --newdb && systemctl start stellar-core && systemctl enable stellar-core'
+	echo 'Your stellar node is now up and running, you can check it by running \'su -c \'stellar-core --conf /etc/stellar-darosior.cf -c "info"\'\' '
+	echo 'If something went wrong, check the logs at /var/log/stellar'
+fi
