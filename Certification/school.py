@@ -6,11 +6,11 @@ from stellar_base.operation import Payment
 from stellar_base.builder import Builder
 import sys
 import requests
+from hashlib import sha256
 
 class School:
-    def __init__(name, token_name, key=None):
+    def __init__(self, name, key=None):
         self.name = name
-        self.tk_name = token_name
         if key is None:
             self.kp = Keypair.random()
         else:
@@ -20,10 +20,18 @@ class School:
                 print("You passed a wrong private key as third argument")
                 raise
                 
-    def award_degree(address, name, date, id):
-        memo = name+date+id
+    def award_degree(self, address, token_name, student_name, year):
+        """
+
+        :param token_name:
+        :param student_name: in format prenamesurname with only one prename
+        :param year: 4-digits number
+        :return:
+        """
+        h = sha256((student_name+year).encode())
+        memo = h.digest()
         builder = Builder(secret=self.kp.seed().decode())
-        builder.add_text_memo(memo.encode('utf-8'))
-        builder.append_payment_op(address, 1, self.token_name, kp_issuer.address().decode())
+        builder.add_hash_memo(memo)
+        builder.append_payment_op(address, 1, token_name, kp_issuer.address().decode())
         builder.sign()
         builder.submit()
