@@ -26,7 +26,7 @@ class School:
         :param token_name:
         :param student_name: in format prenamesurname with only one prename
         :param year: 4-digits number
-        :return:
+        :return: Horizon return of the tx
         """
         h = sha256((student_name+year).encode())
         memo = h.digest()
@@ -34,4 +34,4 @@ class School:
         builder.add_hash_memo(memo)
         builder.append_payment_op(address, 1, token_name, kp_issuer.address().decode())
         builder.sign()
-        builder.submit()
+        return builder.submit()
