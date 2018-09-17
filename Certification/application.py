@@ -13,9 +13,9 @@ class App:
     def index():
         return render_template('index.html', js_folder=url_for('static', filename='js'), img_folder=url_for('static', filename='img'), css_folder=url_for('static', filename='css'))
 
-    def run(self):
-        webapp.run()
+    def run(self, host):
+        webapp.run(host)
 
 if __name__ == '__main__':
     app = App()
-    app.run()
+    app.run(host='0.0.0.0')
