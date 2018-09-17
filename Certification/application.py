@@ -32,13 +32,13 @@ class App:
                                    img_folder=url_for('static', filename='img'),
                                    css_folder=url_for('static', filename='css'),
                                    school=1, formschoolerror=1)
-    @webapp.route('/award_degree')
+    @webapp.route('/award_degree', methods=['POST'])
     def award_degree():
         try:
             school = School(session['school_seed'])
             name = request.form['name'].lower()
             response = school.award_degree(request.form['address'], request.form['token_name'], name, request.form['year'])
-            return response
+            return str(response)
         except Exception as e:
             return render_template('index.html', js_folder=url_for('static', filename='js'),
                                    img_folder=url_for('static', filename='img'),
@@ -52,4 +52,3 @@ class App:
 if __name__ == '__main__':
     app = App()
     app.run('0.0.0.0', '5010')
-GAYFCLZJ2O6FQYDFQ43LI4TKL7E4MHPIU4TMBBCG22N7C7FFAMPI6OM2

@@ -111,6 +111,9 @@ http://www.templatemo.com/tm-502-short
                                     <label>L'année du décernement : </label>
                                     <input class="form-control" type="number" name="year" placeholder="YYYY" min="2010" max="2018">
                                 </div>
+                                <div id="awarderror" style="visibility:hidden">
+
+                                </div>
                                 <button type="submit" class="btn btn-primary">Submit</button>
                             </form>
                         {% else %}
@@ -191,6 +194,21 @@ http://www.templatemo.com/tm-502-short
                     div = document.getElementById('groupSchoolLogin').classList;
                     if(Array.from(div).includes('has-error'))
                         div.remove('has-error')
+                    }, 100)
+    		</script>
+        {% endif %}
+        {% if awarderror is defined %}
+    		<script>
+                setTimeout(()=>{
+                    document.getElementById('awarderror').style.visibility = 'visible'
+                    document.getElementById('awarderror').innerHTML = "Une erreur est survenue : <br>{{ awarderror }}"
+                    }, 100)
+    		</script>
+        {% else %}
+            <script>
+                setTimeout(()=>{
+                    document.getElementById('awarderror').style.visibility = 'hidden'
+                    document.getElementById('awarderror').innerHTML = ""
                     }, 100)
     		</script>
         {% endif %}

@@ -9,13 +9,12 @@ import requests
 from hashlib import sha256
 
 class School:
-    def __init__(self, name, key=None):
-        self.name = name
+    def __init__(self, key=None):
         if key is None:
             self.kp = Keypair.random()
         else:
             try:
-                self.kp = Keypair.from_seed(key.encode())
+                self.kp = Keypair.from_seed(key)
             except:
                 print("You passed a wrong private key as third argument")
                 raise
@@ -32,6 +31,6 @@ class School:
         memo = h.digest()
         builder = Builder(secret=self.kp.seed().decode())
         builder.add_hash_memo(memo)
-        builder.append_payment_op(address, 1, token_name, kp_issuer.address().decode())
+        builder.append_payment_op(address, 1, token_name, self.kp.address().decode())
         builder.sign()
         return builder.submit()
