@@ -25,6 +25,11 @@ http://www.templatemo.com/tm-502-short
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="stylesheet">
 
         <script src="{{js_folder}}/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+        {% if school == 1 %}
+    		<script>
+    			window.location.assign("http://localhost:5000/#school");
+    		</script>
+    	{% endif %}
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -56,9 +61,9 @@ http://www.templatemo.com/tm-502-short
             
               <ul class="resp-tabs-list hor_1">
                 <a href="index.html"><div class="logo"><img src="{{img_folder}}/logo.png"></div></a>
-                <li class="tabs-1" data-tab-name="profile"><span class="tabs-text">Présentation</span></li>
-                <li class="tabs-2" data-tab-name="resume"><span class="tabs-text">Je suis une école</span></li>
-                <li class="tabs-3" data-tab-name="portfolio"><span class="tabs-text">Je veux vérifier un diplôme</span></li>             
+                <li class="tabs-1" data-tab-name="home"><span class="tabs-text">Présentation</span></li>
+                <li class="tabs-2" data-tab-name="school"><span class="tabs-text">Je suis une école</span></li>
+                <li class="tabs-3" data-tab-name="verification"><span class="tabs-text">Je veux vérifier un diplôme</span></li>             
                 <li class="tabs-4" data-tab-name="contact"><span class="tabs-text">Menu inutile</span></li>
               </ul>
               
@@ -92,9 +97,15 @@ http://www.templatemo.com/tm-502-short
                   <div class="about-container">
                     <div class="row">
                       <div class="col-md-12">
-                        <h2>More info about <em>Short</em></h2>
+                        <h2>Je suis une <em>école</em></h2>
                         <div class="under-line"></div>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc purus ligula, ullamcorper id velit id, vestibulum auctor sapien. Sed quis mauris eget sem <em>imperdiet rhoncus hendrerit</em> sed neque.<br><br>Praesent dictum at erat <em>consectetur imperdiet</em>. Vivamus lobortis eros quis elementum egestas. Fusce sed lorem sed tellus convallis pulvinar non eget erat. Nunc sapien mauris, molestie sed interdum vel, pharetra et metus.</p>
+                        <p>Connexion avec votre clef privée :<br></p>
+                        <form method="post" action="/school_login">
+                        	<div class="form-group">
+	                        	<input type="password" name="secret" placeholder="SAV76USXIJOBMEQXPANUOQM6F5LIOTLPDIDVRJBFFE2MDJXG24TAPUU7" size="56"/>
+    						</div>
+                        	<button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
                         <img src="{{img_folder}}/about-image.jpg">
                       </div>
                     </div>
