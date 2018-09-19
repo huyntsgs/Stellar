@@ -25,6 +25,11 @@ http://www.templatemo.com/tm-502-short
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="stylesheet">
 
         <script src="{{js_folder}}/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+
+        <!-- Datepicker -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.css"/>
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -100,12 +105,12 @@ http://www.templatemo.com/tm-502-short
                                     <input class="form-control" type="text" name="address" placeholder="GCFXHS4GXL6BVUCXBWXGTITROWLVYXQKQLF4YH5O5JT3YZXCYPAFBJZB" minlength="56" maxlength="56" size="56"/>
                                 </div>
                                 <div class="form-group">
-                                    <label>Le nom du diplômé (sous la forme <em>prenomnomdefamille</em>) : </label>
-                                    <input class="form-control" type="text" name="name" placeholder="alexandredupont" />
+                                    <label>Le nom du diplômé (sous la forme <em>prenomn1prenom2nomdefamille</em>) : </label>
+                                    <input class="form-control" type="text" name="name" placeholder="jeanjacquespauldupont" />
                                 </div>
                                 <div class="form-group">
-                                    <label>L'abréviation du diplôme (<=12 caractères) : </label>
-                                    <input class="form-control" type="text" name="token_name" maxlength="12"/>
+                                    <label>La date de naissance du diplômé : </label>
+                                    <input class="form-control" placeholder="JJ//MM/AAAA" type="text" name="birthdate"/>
                                 </div>
                                 <div class="form-group">
                                     <label>L'année du décernement : </label>
@@ -147,20 +152,22 @@ http://www.templatemo.com/tm-502-short
                         <div class="row">
                             <div class="col-md-12">
                                 <h2>Je veux <em>vérifier</em> un diplôme</h2>
-                                <form>
-                                    Pour vérifier un diplôme, vous pouvez au choix :
+                                <br/>
+                                <p>Pour vérifier un diplôme, vous pouvez au choix :<br/></p>
+                                <form action="check_degree">
                                     <div class="form-group">
                                         <label>
-                                            <input type="file" accept="image/*" capture="environment" tabindex="-1" value="Scanner le QRcode">
+                                            <label style="display:inline-block; margin-right:10px;">Scanner le QRcode : </label><input type="file" name="txqr" accept="image/*" capture="environment" style="display:inline-block">
                                         </label>
                                     </div>
                                     <div class="form-group">
                                         <label>
-                                            Entrer le hash de la transaction : <input type="text" placeholder="hash de la transaction" size="64" minlength="64" maxlength="64">
+                                            Entrer le hash de la transaction : <input type="text" name="txhash" placeholder="hash de la transaction" minlength="64" maxlength="64">
                                         </label>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                    <button type="submit" class="btn btn-primary">Vérifier</button>
                                 </form>
+                                <br>
                             </div>
                         </div>
                     </div>
@@ -214,11 +221,11 @@ http://www.templatemo.com/tm-502-short
                 setTimeout(()=>document.getElementById('school_button').click(), 100)
     		</script>
         {% endif %}
-        {% if formschoolerror == 1 %}
+        {% if session["school_seed"] is defined and formschoolerror == 1 %}
     		<script>
                 setTimeout(()=>document.getElementById('groupSchoolLogin').classList.add('has-error'), 100)
     		</script>
-        {% else %}
+        {% else %} <!-- Shown when it shouldn't -->
             <script>
                 setTimeout(()=>{
                     div = document.getElementById('groupSchoolLogin').classList;
@@ -242,5 +249,20 @@ http://www.templatemo.com/tm-502-short
                     }, 100)
     		</script>
         {% endif %}
+        <!-- Snippet for datepicker -->
+        <script>
+            $(document).ready(function(){
+              var date_input=$('input[name="birthdate"]'); //our date input has the name "date"
+              var container=$('.bootstrap-iso form').length>0 ? $('.bootstrap-iso form').parent() : "body";
+              var options={
+                format: 'dd/mm/yyyy',
+                startView: 2,
+                container: container,
+                todayHighlight: true,
+                autoclose: true,
+              };
+              date_input.datepicker(options);
+            })
+        </script>
     </body>
 </html>

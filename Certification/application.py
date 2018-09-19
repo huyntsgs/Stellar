@@ -2,6 +2,7 @@
 
 from school import School
 from stellar_base.keypair import Keypair
+from stellar_base.horizon import Horizon
 from flask_qrcode import QRcode
 from flask import Flask, render_template, url_for, request, session
 webapp = Flask(__name__)
@@ -51,7 +52,7 @@ class App:
         try:
             school = School(session['school_seed'])
             name = request.form['name'].lower()
-            response = school.award_degree(request.form['address'], request.form['token_name'], name, request.form['year'])
+            response = school.award_degree(request.form['address'], name, request.form['birthdate'], request.form['year'])
             return render_template('index.html', js_folder=url_for('static', filename='js'),
                                    img_folder=url_for('static', filename='img'),
                                    css_folder=url_for('static', filename='css'),
@@ -62,9 +63,18 @@ class App:
                                    css_folder=url_for('static', filename='css'),
                                    school=1, awarderror=e)
 
+    @webapp.route('/check_degree', methods=['GET'])
+    def check_degree():
+        try:
+            tx = Horizon.transaction(request.args.get('txhash'))
+        except:
+            try:
+                tx = Horizon.transaction(request.args.get('txqr'))
+            except:
+                pass
 
     def run(self, host, port):
-        webapp.run(host, port)
+        webapp.run(host, port, debug=True)
 
 if __name__ == '__main__':
     app = App()

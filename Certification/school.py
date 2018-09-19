@@ -19,18 +19,17 @@ class School:
                 print("You passed a wrong private key as third argument")
                 raise
                 
-    def award_degree(self, address, token_name, student_name, year):
+    def award_degree(self, address, student_name, birthdate, year):
         """
 
-        :param token_name:
         :param student_name: in format prenamesurname with only one prename
         :param year: 4-digits number
         :return: Horizon return of the tx
         """
-        h = sha256((student_name+year).encode())
+        h = sha256((student_name+birthdate+year).encode())
         memo = h.digest()
         builder = Builder(secret=self.kp.seed().decode())
         builder.add_hash_memo(memo)
-        builder.append_payment_op(address, 1, token_name, self.kp.address().decode())
+        builder.append_payment_op(address, 0.0000001)
         builder.sign()
         return builder.submit()
