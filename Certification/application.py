@@ -92,7 +92,8 @@ class App:
                         qr.save(fpath)
                         data = qreader.read(fpath)
                         os.remove(fpath)
-                        return str(data)
+                        #return str(data)
+                        tx = horizon.transaction(data)
                     else:
                         raise Exception("Merci de ne passer que des images générées par ce site")
             else:
