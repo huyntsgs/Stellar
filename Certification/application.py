@@ -3,7 +3,11 @@
 from school import School, hash128
 from stellar_base.keypair import Keypair
 from stellar_base.horizon import Horizon
-from hashlib import sha256
+
+from werkzeug.utils import secure_filename
+import qreader
+import os
+
 from flask_qrcode import QRcode
 from flask import Flask, render_template, url_for, request, session
 webapp = Flask(__name__)
@@ -73,36 +77,54 @@ class App:
                                    verif=1)
         horizon = Horizon()
         try:
-            if request.args.get('txhash') is defined:
-                tx = horizon.transaction(request.args.get('txhash'))
-            elif request.args.get('txqr') is defined:
-                pass
+            if 'txhash' in request.form and request.form.get('txhash'):
+                tx = horizon.transaction(request.form.get('txhash'))
+            elif 'txqr' in request.files:
+                qr = request.files.get('txqr')
+                # if user does not select file, browser also
+                # submit an empty part without filename
+                if qr.filename == '':
+                    raise Exception("Vous devez spécifier au moins un hash OU un qrcode")
+                else:
+                    if app.allowed_filename(qr.filename):
+                        fname = secure_filename(qr.filename)
+                        fpath = os.path.join(os.getcwd(), 'static', fname)
+                        qr.save(fpath)
+                        data = qreader.read(fpath)
+                        os.remove(fpath)
+                        return str(data)
+                    else:
+                        raise Exception("Merci de ne passer que des images générées par ce site")
             else:
                 raise Exception("Vous devez spécifier au moins un hash OU un qrcode")
+
             # Hashing infos from the from to check the hash with the one in the transaction's memo
-            name = request.args.get('name')
-            birthdate = request.args.get('birthdate')
-            year = request.args.get('year')
+            name = request.form.get('name')
+            birthdate = request.form.get('birthdate')
+            year = request.form.get('year')
             h = hash128((name+birthdate+year).encode())
             if h == tx.get('memo'):
                 return render_template('index.html', js_folder=url_for('static', filename='js'),
-                                   img_folder=url_for('static', filename='img'),
-                                   css_folder=url_for('static', filename='css'),
-                                   verif=1, verif_passed=1, id=tx.get('source_account'),
-                                   name=name, birthdate=birthdate, year=year)
+                                       img_folder=url_for('static', filename='img'),
+                                       css_folder=url_for('static', filename='css'),
+                                       verif=1, verif_passed=1, id=tx.get('source_account'),
+                                       name=name, birthdate=birthdate, year=year)
             else:
                 return render_template('index.html', js_folder=url_for('static', filename='js'),
                                        img_folder=url_for('static', filename='img'),
                                        css_folder=url_for('static', filename='css'),
                                        verif=1, veriferror="Les informations saisies ne correspondent pas avec l'exemplaire du diplôme décerné")
         except Exception as e:
-            try:
-                tx = Horizon.transaction(request.args.get('txqr'))
-            except Exception as e:
-                return render_template('index.html', js_folder=url_for('static', filename='js'),
-                                       img_folder=url_for('static', filename='img'),
-                                       css_folder=url_for('static', filename='css'),
-                                       verif=1, veriferror=e)
+            return render_template('index.html', js_folder=url_for('static', filename='js'),
+                                   img_folder=url_for('static', filename='img'),
+                                   css_folder=url_for('static', filename='css'),
+                                   verif=1, veriferror=e)
+    @classmethod
+    def allowed_filename(cls, name):
+        if name.split('.')[-1] == 'png':
+            return True
+        else:
+            return False
 
     def run(self, host, port):
         webapp.run(host, port, debug=True)

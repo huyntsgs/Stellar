@@ -158,7 +158,7 @@ http://www.templatemo.com/tm-502-short
                                         <p>Le diplôme a bien été decerné à {{ name }}, né le {{ birthdate }}, en {{ year }} par l'école avec l'identifiant {{ id }}.</p>
                                     </div>
                                 {% else %}
-                                    <form action="check_degree" method="post">
+                                    <form action="check_degree" method="post" enctype=multipart/form-data>
                                         <p>Pour vérifier un diplôme, vous pouvez au choix :<br/></p>
                                         <div class="form-group">
                                             <label>
