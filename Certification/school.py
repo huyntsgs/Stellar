@@ -6,7 +6,22 @@ from stellar_base.operation import Payment
 from stellar_base.builder import Builder
 import sys
 import requests
-from hashlib import sha256
+from hashlib import sha256, new
+
+# From https://github.com/darosior/bitcoin-utils/blob/master/utils.py
+def hash128(bytes):
+    """
+
+    Args:
+        bytes (bytes): the data to hash.
+	bin (bool): if set to True, returns bytes.
+
+    Returns:
+        str/bytes: the hash of the data passed as first parameter.
+    """
+    rip = new('ripemd')
+    rip.update(sha256(bytes).digest())
+    return rip.hexdigest()[:28]
 
 class School:
     def __init__(self, key=None):
@@ -18,7 +33,7 @@ class School:
             except:
                 print("You passed a wrong private key as third argument")
                 raise
-                
+
     def award_degree(self, address, student_name, birthdate, year):
         """
 
@@ -26,10 +41,10 @@ class School:
         :param year: 4-digits number
         :return: Horizon return of the tx
         """
-        h = sha256((student_name+birthdate+year).encode())
-        memo = h.digest()
+        memo = hash128((student_name+birthdate+year).encode())
         builder = Builder(secret=self.kp.seed().decode())
-        builder.add_hash_memo(memo)
+        builder.add_text_memo(memo)
         builder.append_payment_op(address, 0.0000001)
         builder.sign()
         return builder.submit()
+

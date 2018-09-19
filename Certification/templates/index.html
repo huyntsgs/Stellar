@@ -63,7 +63,7 @@ http://www.templatemo.com/tm-502-short
                 <a href="index.html"><div class="logo"><img src="{{img_folder}}/logo.png"></div></a>
                 <li class="tabs-1" data-tab-name="home"><span class="tabs-text">Présentation</span></li>
                 <li class="tabs-2" data-tab-name="school" id="school_button"><span class="tabs-text">Je suis une école</span></li>
-                <li class="tabs-3" data-tab-name="verification"><span class="tabs-text">Je veux vérifier un diplôme</span></li>
+                <li class="tabs-3" data-tab-name="verification" id="verif_button"><span class="tabs-text">Je veux vérifier un diplôme</span></li>
               </ul>
               
               <div class="resp-tabs-container hor_1 tabs_scroll">
@@ -153,20 +153,47 @@ http://www.templatemo.com/tm-502-short
                             <div class="col-md-12">
                                 <h2>Je veux <em>vérifier</em> un diplôme</h2>
                                 <br/>
-                                <p>Pour vérifier un diplôme, vous pouvez au choix :<br/></p>
-                                <form action="check_degree">
-                                    <div class="form-group">
-                                        <label>
-                                            <label style="display:inline-block; margin-right:10px;">Scanner le QRcode : </label><input type="file" name="txqr" accept="image/*" capture="environment" style="display:inline-block">
-                                        </label>
+                                {% if verif_passed == 1 %}
+                                    <div id="verifpassed" style="background-color:#a6ffa6; color:#108810">
+                                        <p>Le diplôme a bien été decerné à {{ name }}, né le {{ birthdate }}, en {{ year }} par l'école avec l'identifiant {{ id }}.</p>
                                     </div>
-                                    <div class="form-group">
-                                        <label>
-                                            Entrer le hash de la transaction : <input type="text" name="txhash" placeholder="hash de la transaction" minlength="64" maxlength="64">
-                                        </label>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Vérifier</button>
-                                </form>
+                                {% else %}
+                                    <form action="check_degree" method="post">
+                                        <p>Pour vérifier un diplôme, vous pouvez au choix :<br/></p>
+                                        <div class="form-group">
+                                            <label>
+                                                <label style="display:inline-block; margin-right:10px;">Scanner le QRcode : </label><input type="file" name="txqr" accept="image/*" capture="environment" style="display:inline-block">
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                Entrer le hash de la transaction : <input type="text" name="txhash" placeholder="hash de la transaction" minlength="64" maxlength="64">
+                                            </label>
+                                        </div>
+                                        <br>
+                                        <p>Il faut aussi les informations du diplômé pour vérifier leur véracité</p>
+                                        <br>
+                                        <div class="form-group">
+                                            <label>Le nom du diplômé (sous la forme <em>prenomn1prenom2nomdefamille</em>) : </label>
+                                            <input class="form-control" type="text" name="name" placeholder="jeanjacquespauldupont" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label>La date de naissance du diplômé : </label>
+                                            <input class="form-control" placeholder="JJ//MM/AAAA" type="text" name="birthdate"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>L'année du décernement : </label>
+                                            <input class="form-control" type="number" name="year" placeholder="YYYY" min="2010" max="2018">
+                                        </div>
+                                        {% if veriferror is defined %}
+                                            <div id="veriferror">
+                                                {{ veriferror }}
+                                            </div>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary">Vérifier</button>
+                                    </form>
+                                {% endif %}
+
                                 <br>
                             </div>
                         </div>
@@ -219,6 +246,11 @@ http://www.templatemo.com/tm-502-short
         {% if school == 1 %}
     		<script>
                 setTimeout(()=>document.getElementById('school_button').click(), 100)
+    		</script>
+        {% endif %}
+        {% if verif == 1 %}
+    		<script>
+                setTimeout(()=>document.getElementById('verif_button').click(), 100)
     		</script>
         {% endif %}
         {% if session["school_seed"] is defined and formschoolerror == 1 %}

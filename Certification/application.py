@@ -1,8 +1,9 @@
 #coding: utf-8
 
-from school import School
+from school import School, hash128
 from stellar_base.keypair import Keypair
 from stellar_base.horizon import Horizon
+from hashlib import sha256
 from flask_qrcode import QRcode
 from flask import Flask, render_template, url_for, request, session
 webapp = Flask(__name__)
@@ -63,15 +64,45 @@ class App:
                                    css_folder=url_for('static', filename='css'),
                                    school=1, awarderror=e)
 
-    @webapp.route('/check_degree', methods=['GET'])
+    @webapp.route('/check_degree', methods=['GET', 'POST'])
     def check_degree():
+        if request.method == 'GET':
+            return render_template('index.html', js_folder=url_for('static', filename='js'),
+                                   img_folder=url_for('static', filename='img'),
+                                   css_folder=url_for('static', filename='css'),
+                                   verif=1)
+        horizon = Horizon()
         try:
-            tx = Horizon.transaction(request.args.get('txhash'))
-        except:
+            if request.args.get('txhash') is defined:
+                tx = horizon.transaction(request.args.get('txhash'))
+            elif request.args.get('txqr') is defined:
+                pass
+            else:
+                raise Exception("Vous devez spécifier au moins un hash OU un qrcode")
+            # Hashing infos from the from to check the hash with the one in the transaction's memo
+            name = request.args.get('name')
+            birthdate = request.args.get('birthdate')
+            year = request.args.get('year')
+            h = hash128((name+birthdate+year).encode())
+            if h == tx.get('memo'):
+                return render_template('index.html', js_folder=url_for('static', filename='js'),
+                                   img_folder=url_for('static', filename='img'),
+                                   css_folder=url_for('static', filename='css'),
+                                   verif=1, verif_passed=1, id=tx.get('source_account'),
+                                   name=name, birthdate=birthdate, year=year)
+            else:
+                return render_template('index.html', js_folder=url_for('static', filename='js'),
+                                       img_folder=url_for('static', filename='img'),
+                                       css_folder=url_for('static', filename='css'),
+                                       verif=1, veriferror="Les informations saisies ne correspondent pas avec l'exemplaire du diplôme décerné")
+        except Exception as e:
             try:
                 tx = Horizon.transaction(request.args.get('txqr'))
-            except:
-                pass
+            except Exception as e:
+                return render_template('index.html', js_folder=url_for('static', filename='js'),
+                                       img_folder=url_for('static', filename='img'),
+                                       css_folder=url_for('static', filename='css'),
+                                       verif=1, veriferror=e)
 
     def run(self, host, port):
         webapp.run(host, port, debug=True)
