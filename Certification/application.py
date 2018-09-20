@@ -122,13 +122,14 @@ class App:
                                    verif=1, veriferror=e)
     @classmethod
     def allowed_filename(cls, name):
-        if name.split('.')[-1] == 'png':
+        extension = name.split('.')[-1]
+        if extension.lower() in ['png', 'jpg', 'jpeg']:
             return True
         else:
             return False
 
     def run(self, host, port):
-        webapp.run(host, port, debug=True)
+        webapp.run(host, port)
 
 if __name__ == '__main__':
     app = App()
