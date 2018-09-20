@@ -125,7 +125,7 @@ http://www.templatemo.com/tm-502-short
                                         <a href="https://stellar.expert/explorer/testnet/tx/{{ txhash }}" style="color:#108810">{{ txhash }}</a>
                                     </div>
                                     <div id="hashqrcode">
-                                        <img src="{{ qrcode(txhash) }}" style="width:50%;height:50%">
+                                        <img src="{{ qrcode(txhash, border=10) }}" style="width:50%;height:50%">
                                     </div>
                                 {% endif %}
                                 <button type="submit" class="btn btn-primary">Décerner</button>
