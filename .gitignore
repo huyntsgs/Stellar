@@ -1,2 +1,6 @@
 venv
 .idea
+Certification/static/*.jpg
+Certification/static/*.png
+Certification/static/*.JPG
+Certification/static/*.PNG

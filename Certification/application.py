@@ -14,6 +14,9 @@ webapp = Flask(__name__)
 QRcode(webapp)
 
 class App:
+    """
+    The class used to wrap up the whole web application.
+    """
     def __init__(self):
         webapp.secret_key = b'Z\xf4{\xe1\xfd\x18\x03(\xb0\xb6\xc8\xf0@\x0e\xf5\xffR\xf4\x1eM\xb2\x8b`\x95T\xb9g\xff\xf2rZS'
 
@@ -77,9 +80,12 @@ class App:
                                    verif=1)
         horizon = Horizon()
         try:
+            # In this part we try to get the hash of the transaction in order to fetch it from horizon. The hash is easier to get from text,
+            # that's why it's the first test.
             if 'txhash' in request.form and request.form.get('txhash'):
                 tx = horizon.transaction(request.form.get('txhash'))
             elif 'txqr' in request.files:
+                # If a qrcode is submitted, we have to save it to decode it, which causes security issues.
                 qr = request.files.get('txqr')
                 # if user does not select file, browser also
                 # submit an empty part without filename
@@ -91,15 +97,14 @@ class App:
                         fpath = os.path.join(os.getcwd(), 'static', fname)
                         qr.save(fpath)
                         data = qreader.read(fpath)
-                        os.remove(fpath)
-                        #return str(data)
+                        os.remove(fpath) # We don't need it anymore
                         tx = horizon.transaction(data)
                     else:
                         raise Exception("Merci de ne passer que des images générées par ce site")
             else:
                 raise Exception("Vous devez spécifier au moins un hash OU un qrcode")
 
-            # Hashing infos from the from to check the hash with the one in the transaction's memo
+            # Hashing infos from the form to check the hash with the one in the transaction's memo
             name = request.form.get('name')
             birthdate = request.form.get('birthdate')
             year = request.form.get('year')
